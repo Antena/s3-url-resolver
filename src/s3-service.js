@@ -6,7 +6,7 @@ var AWS = require('aws-sdk'),
 function init(config) {
 	AWS.config.update(config);
 
-	var s3 = new AWS.S3({ computeChecksums: true });
+	s3 = new AWS.S3({ computeChecksums: true });
 
 	var params = {
 		Bucket: config.bucket
