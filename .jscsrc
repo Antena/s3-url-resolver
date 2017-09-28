@@ -1,0 +1,32 @@
+{
+	"requireCurlyBraces": ["if", "else", "for", "while", "do", "try", "catch", "finally"],
+	"requireSpaceAfterKeywords": ["if", "else", "for", "while", "do", "switch", "return", "try", "catch", "finally"],
+	"disallowSpaceAfterKeywords": [],
+	"requireSpacesInFunctionExpression": {
+		"beforeOpeningCurlyBrace": true
+	},
+	"disallowSpacesInFunctionExpression": {
+		"beforeOpeningRoundBrace": true
+	},
+	"requireSpaceBeforeBinaryOperators": ["?", "+", "/", "*", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<=", "-"],
+	"requireSpaceAfterBinaryOperators": ["?", "+", "/", "*", ":", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<=", "-", ","],
+	"disallowEmptyBlocks": true,
+	"disallowSpaceAfterPrefixUnaryOperators": ["!"],
+	"disallowSpaceBeforeBinaryOperators": [","],
+	"disallowSpaceBeforePostfixUnaryOperators": ["++", "--"],
+	"disallowImplicitTypeConversion": ["string"],
+	"disallowKeywords": ["with"],
+	"disallowMultipleLineBreaks": true,
+	"disallowKeywordsOnNewLine": ["else", "catch", "finally"],
+	"disallowTrailingWhitespace": true,
+	"requireLineFeedAtFileEnd": true,
+	"requireBlocksOnNewline": true,
+	"validateIndentation": "\t",
+
+	"excludeFiles": [
+		"node_modules/**",
+		"example/node_modules/**",
+		"dist/**",
+		"example/dist/**"
+	]
+}

@@ -1,0 +1,24 @@
+{
+	"node": true,
+	"bitwise": true,
+	"browser": true,
+	"curly": true,
+	"eqeqeq": true,
+	"forin": true,
+	"maxerr": 50,
+	"noarg": true,
+	"noempty": true,
+	"strict": true,
+	"undef": true,
+	"unused": "vars",
+	"smarttabs": true,
+	"globals" : {
+		/* MOCHA */
+		"describe"   : false,
+		"it"         : false,
+		"before"     : false,
+		"beforeEach" : false,
+		"after"      : false,
+		"afterEach"  : false
+	}
+}

@@ -1,0 +1,50 @@
+{
+  "name": "s3-url-resolver",
+  "version": "0.0.1",
+  "description": "Get a signed URL for an s3 resource, either from redis or from s3.",
+  "keywords": [
+    "signed-url",
+    "signer",
+    "s3",
+    "redis",
+    "url"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Antena/s3-url-resolver",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Antena/s3-url-resolver"
+  },
+  "bugs": {
+    "url": "https://github.com/Antena/s3-url-resolver/issues"
+  },
+  "author": {
+    "name": "Denise Fernandez",
+    "email": "denise@antena.co",
+    "url": "https://github.com/Antena"
+  },
+  "maintainers": [
+    "Denise Fernandez <denise@antena.co>",
+    "Gonzalo Bellver <gonzalo@antena.co>"
+  ],
+  "main": "src/index.js",
+  "devDependencies": {
+    "jscs": "^3.0.7",
+    "jscs-stylish": "^0.3.1",
+    "jshint": "^2.9.5",
+    "jshint-stylish": "^2.2.1",
+    "mocha": "^3.5.3",
+    "should": "^13.1.0"
+  },
+  "scripts": {
+    "lint": "jshint . --reporter=node_modules/jshint-stylish; jscs . --reporter=node_modules/jscs-stylish",
+    "test": "mocha -R spec"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "dependencies": {
+    "aws-sdk": "2.x",
+    "redis": "2.x"
+  }
+}
