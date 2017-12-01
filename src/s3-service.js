@@ -3,8 +3,10 @@
 var AWS = require('aws-sdk'),
 	s3;
 
-function init(config) {
-	AWS.config.update(config);
+function init(config, awsConfigOverride) {
+	if (awsConfigOverride) {
+		AWS.config.update(awsConfigOverride);
+	}
 
 	s3 = new AWS.S3({ computeChecksums: true });
 
