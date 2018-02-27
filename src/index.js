@@ -3,18 +3,28 @@
 var redisService = require('./redis-service'),
 	s3Service = require('./s3-service'),
 	s3,
-	redis;
+	redis,
+	redisConfig;
+
+var redisStatus = require('redis-status');
 
 var PREFERENCES = {
 	expirationLimit: 3600 //1 hrs
 };
 
 function redisAvailable() {
-	if (!redis) {
-		redis = redisService.getClient();
-	}
+	redisStatus(redisConfig).checkStatus(function(err) {
+		console.log('pepe')
+		if (!err) {
+			console.log('pepito')
+			if (!redis) {
+				redis = redisService.getClient();
+			}
 
-	return !!redis && redis.connected;
+			return !!redis && redis.connected;
+		}
+		console.error('Redis NOT connected');
+	});
 }
 
 var resolveUrl = function resolve(bucket, key, callback) {
@@ -67,11 +77,18 @@ var resolveUsingCache = function(bucket, key, callback) {
 	}
 };
 
-module.exports = function(config, s3Client, redisClient) {
-
+module.exports = function (config, s3Client, redisClient) {
 	//TODO (denise) validate config
-	redis = redisClient || redisService.init(config.redis).getClient();
+	redisConfig = config.redis;
+
 	s3 = s3Client || s3Service.init(config.s3).getS3Client();
+
+	redisStatus(redisConfig).checkStatus(function(err) {
+		if (!err) {
+			redis = redisClient || redisService.init(redisConfig).getClient();
+		}
+		console.error('Redis NOT connected');
+	});
 
 	return {
 		resolveUrl: resolveUrl,
