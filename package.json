@@ -46,6 +46,7 @@
   "dependencies": {
     "aws-sdk": "2.x",
     "md5": "^2.2.1",
-    "redis": "2.x"
+    "redis": "2.x",
+    "redis-status": "^1.0.3"
   }
 }
