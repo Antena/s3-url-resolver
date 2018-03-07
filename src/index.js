@@ -21,7 +21,7 @@ function clientAvailable() {
 }
 
 function isRedisAvailable(callback) {
-	redisStatus(redisConfig).checkStatus((err) => {
+	redisStatus(redisConfig).checkStatus(function(err) {
 		if (err) {
 			return callback(err);
 		}
