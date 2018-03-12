@@ -4,7 +4,8 @@ var redisService = require('./redis-service'),
 	s3Service = require('./s3-service'),
 	s3,
 	redis,
-	redisConfig;
+	redisConfig,
+	logger;
 
 var redisStatus = require('redis-status');
 
@@ -53,7 +54,7 @@ var resolveUsingS3 = function(bucket, key, callback) {
 
 	s3.getSignedUrl('getObject', params, function(err, signedURL) {
 		if (err) {
-			console.error(err);
+			logger.error(err);
 		}
 
 		isRedisAvailable(function(err) {
@@ -62,7 +63,7 @@ var resolveUsingS3 = function(bucket, key, callback) {
 					return redis.setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
 				}
 			}
-			return console.error('Redis NOT connected');
+			return logger.warn('Redis NOT connected');
 		});
 
 		callback(err, signedURL);
@@ -87,14 +88,18 @@ var resolveUsingCache = function(bucket, key, callback) {
 };
 
 module.exports = function (config, s3Client, redisClient) {
-	//TODO (denise) validate config
+	// TODO (denise) validate config
+	logger = config.logger || console;
+
 	redisConfig = config.redis;
+	redisConfig.logger = logger;
+	config.s3.logger = logger;
 
 	s3 = s3Client || s3Service.init(config.s3).getS3Client();
 
 	isRedisAvailable(function(err) {
 		if (err) {
-			console.error('Redis NOT connected');
+			logger.warn('Redis NOT connected');
 		}
 		redis = redisClient || redisService.init(redisConfig).getClient();
 	});
