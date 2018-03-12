@@ -4,7 +4,8 @@ var async = require('async'),
 	redis = require("redis"),
 	md5 = require('md5'),
 	client,
-	redisConfig;
+	redisConfig,
+	logger;
 
 var PREFERENCES = {
 	MAX_SESSION_AGE: 60 * 60
@@ -12,6 +13,7 @@ var PREFERENCES = {
 
 function init(config) {
 	redisConfig = config;	//TODO (denise) validate
+	logger = redisConfig.logger;
 	return RedisService;
 }
 
@@ -19,12 +21,13 @@ function getClient(overrideConfig) {
 	if (!client || !client.connected) {
 		var config = overrideConfig || redisConfig;
 		client = redis.createClient(config.port, config.host, {});
-		client.on('connect', function() {
-			console.log('Redis connected');
+		client.on('ready', function() {
+			logger.info('Redis connected');
 			return client;
 		});
-		client.on('err', function() {
-			console.warn('Redis disconnected');
+		client.on('error', function(){});
+		client.on('end', function() {
+			logger.warn('Redis disconnected');
 			return null;
 		});
 
@@ -41,7 +44,7 @@ function remove(user, fileBuffer, callback) {
 			cb(null, currentMD5Key);
 		},
 		function(key, cb) {
-			console.log('Deleting from key from redis: ', key);
+			logger.info('Deleting from key from redis: ', key);
 			client.del(key, cb);
 		}
 	], function(err, data) {

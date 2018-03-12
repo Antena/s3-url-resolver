@@ -1,7 +1,8 @@
 'use strict';
 
 var AWS = require('aws-sdk'),
-	s3;
+	s3,
+	logger;
 
 function init(config, awsConfigOverride) {
 	if (awsConfigOverride) {
@@ -14,12 +15,14 @@ function init(config, awsConfigOverride) {
 		Bucket: config.bucket
 	};
 
+	logger = config.logger;
+
 	// Ensure the main bucket is created and we have access to it
 	s3.headBucket(params, function(err) {
 		if (err) {
-			console.error("No access to uploads S3 Bucket '" + config.bucket + "'");
+			logger.error("No access to uploads S3 Bucket '" + config.bucket + "'");
 		} else {
-			console.log("Access to S3 Bucket '" + config.bucket + "' OK");
+			logger.info("Access to S3 Bucket '" + config.bucket + "' OK");
 		}
 	});
 
