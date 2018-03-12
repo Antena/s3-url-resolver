@@ -25,7 +25,11 @@ function getClient(overrideConfig) {
 			logger.info('Redis connected');
 			return client;
 		});
-		client.on('error', function(){});
+		client.on('error', function(){
+			// If Redis is not responsive, `node_redis` will emit an error on the next turn of the event
+			// loop. If we don't provide an error handler, that error will bring down the process. Providing
+			// an error handler will cause `node_redis` to begin attempting to reconnect
+		});
 		client.on('end', function() {
 			logger.warn('Redis disconnected');
 			return null;
