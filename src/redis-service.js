@@ -3,6 +3,7 @@
 var async = require('async'),
 	redis = require("redis"),
 	md5 = require('md5'),
+	redisStatus = require('redis-status'),
 	client,
 	redisConfig,
 	logger;
@@ -65,12 +66,32 @@ function setex(key, expiration, data) {
 	getClient().setex(key, expiration, data);
 }
 
+function isRedisAvailable(callback) {
+
+	redisStatus(redisConfig).checkStatus(function(err) {
+		if (err) {
+			return callback(err);
+		}
+		return callback();
+	});
+}
+
+function clientAvailable() {
+	if (!client) {
+		client = getClient();
+	}
+
+	return !!client && client.connected;
+}
+
 var RedisService = {
 	init: init,
 	get: get,
 	getClient: getClient,
 	delete: remove,
-	setex: setex
+	setex: setex,
+	isRedisAvailable: isRedisAvailable,
+	clientAvailable: clientAvailable
 };
 
 module.exports = RedisService;

@@ -7,32 +7,20 @@ var redisService = require('./redis-service'),
 	redisConfig,
 	logger;
 
-var redisStatus = require('redis-status');
-
 var PREFERENCES = {
 	expirationLimit: 3600 //1 hrs
 };
 
-function clientAvailable() {
-	if (!redis) {
+function getClient() {
+	if(!redis) {
 		redis = redisService.getClient();
 	}
-
-	return !!redis && redis.connected;
-}
-
-function isRedisAvailable(callback) {
-	redisStatus(redisConfig).checkStatus(function(err) {
-		if (err) {
-			return callback(err);
-		}
-		return callback();
-	});
+	return redis;
 }
 
 var resolveUrl = function resolve(bucket, key, callback) {
-	isRedisAvailable(function(err) {
-		if (!err && clientAvailable()) {
+	redisService.isRedisAvailable(function(err) {
+		if (!err && redisService.clientAvailable()) {
 			return resolveUsingCache(bucket, key, callback);
 		}
 		return resolveUsingS3(bucket, key, callback);
@@ -57,10 +45,10 @@ var resolveUsingS3 = function(bucket, key, callback) {
 			logger.error(err);
 		}
 
-		isRedisAvailable(function(err) {
-			if (!err && clientAvailable()) {
+		redisService.isRedisAvailable(function(err) {
+			if (!err && redisService.clientAvailable()) {
 				if (redisKey) {
-					return redis.setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
+					return getClient().setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
 				}
 			}
 			return logger.warn('Redis NOT connected');
@@ -73,9 +61,9 @@ var resolveUsingS3 = function(bucket, key, callback) {
 var resolveUsingCache = function(bucket, key, callback) {
 	var redisKey = toRedisKey(bucket, key);
 
-	isRedisAvailable(function(err) {
-		if (!err && clientAvailable()) {
-			redis.get(redisKey, function(err, stored) {
+	redisService.isRedisAvailable(function(err) {
+		if (!err && redisService.clientAvailable()) {
+			getClient().get(redisKey, function(err, stored) {
 				if (stored) {
 					return callback(null, stored);
 				}
@@ -97,11 +85,13 @@ module.exports = function (config, s3Client, redisClient) {
 
 	s3 = s3Client || s3Service.init(config.s3).getS3Client();
 
-	isRedisAvailable(function(err) {
+	redisService.init(redisConfig);
+
+	redisService.isRedisAvailable(function(err) {
 		if (err) {
 			logger.warn('Redis NOT connected');
 		}
-		redis = redisClient || redisService.init(redisConfig).getClient();
+		redis = redisClient || redisService.getClient();
 	});
 
 	return {
