@@ -19,12 +19,10 @@ function getClient() {
 }
 
 var resolveUrl = function resolve(bucket, key, callback) {
-	redisService.isRedisAvailable(function(err) {
-		if (!err && redisService.clientAvailable()) {
-			return resolveUsingCache(bucket, key, callback);
-		}
-		return resolveUsingS3(bucket, key, callback);
-	});
+	if (redisService.isRedisAvailable()) {
+		return resolveUsingCache(bucket, key, callback);
+	}
+	return resolveUsingS3(bucket, key, callback);
 };
 
 function toRedisKey(bucket, key) {
@@ -45,14 +43,9 @@ var resolveUsingS3 = function(bucket, key, callback) {
 			logger.error(err);
 		}
 
-		redisService.isRedisAvailable(function(err) {
-			if (!err && redisService.clientAvailable()) {
-				if (redisKey) {
-					return getClient().setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
-				}
-			}
-			return logger.warn('Redis NOT connected');
-		});
+		if (redisService.isRedisAvailable() && redisKey) {
+			getClient().setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
+		}
 
 		callback(err, signedURL);
 	});
@@ -61,18 +54,15 @@ var resolveUsingS3 = function(bucket, key, callback) {
 var resolveUsingCache = function(bucket, key, callback) {
 	var redisKey = toRedisKey(bucket, key);
 
-	redisService.isRedisAvailable(function(err) {
-		if (!err && redisService.clientAvailable()) {
-			getClient().get(redisKey, function(err, stored) {
-				if (stored) {
-					return callback(null, stored);
-				}
-				return resolveUsingS3(bucket, key, callback);
-			});
-		} else {
+	if (redisService.isRedisAvailable()) {
+		return getClient().get(redisKey, function(err, stored) {
+			if (stored) {
+				return callback(null, stored);
+			}
 			return resolveUsingS3(bucket, key, callback);
-		}
-	});
+		});
+	}
+	return resolveUsingS3(bucket, key, callback);
 };
 
 module.exports = function (config, s3Client, redisClient) {
@@ -87,12 +77,9 @@ module.exports = function (config, s3Client, redisClient) {
 
 	redisService.init(redisConfig);
 
-	redisService.isRedisAvailable(function(err) {
-		if (err) {
-			logger.warn('Redis NOT connected');
-		}
+	if (redisService.isRedisAvailable()) {
 		redis = redisClient || redisService.getClient();
-	});
+	}
 
 	return {
 		resolveUrl: resolveUrl,

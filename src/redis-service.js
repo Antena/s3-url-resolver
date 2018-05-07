@@ -3,10 +3,11 @@
 var async = require('async'),
 	redis = require("redis"),
 	md5 = require('md5'),
-	redisStatus = require('redis-status'),
 	client,
 	redisConfig,
 	logger;
+
+var isServiceOK = true;
 
 var PREFERENCES = {
 	MAX_SESSION_AGE: 60 * 60
@@ -18,12 +19,17 @@ function init(config) {
 	return RedisService;
 }
 
+function changeStatus(status) {
+	isServiceOK = status;
+}
+
 function getClient(overrideConfig) {
 	if (!client || !client.connected) {
 		var config = overrideConfig || redisConfig;
 		client = redis.createClient(config.port, config.host, {});
 		client.on('ready', function() {
 			logger.info('Redis connected');
+			changeStatus(true);
 			return client;
 		});
 		client.on('error', function(){
@@ -32,6 +38,7 @@ function getClient(overrideConfig) {
 			// an error handler will cause `node_redis` to begin attempting to reconnect
 		});
 		client.on('end', function() {
+			changeStatus(false);
 			logger.warn('Redis disconnected');
 			return null;
 		});
@@ -43,37 +50,40 @@ function getClient(overrideConfig) {
 }
 
 function remove(user, fileBuffer, callback) {
-	async.waterfall([
-		function(cb) {
-			var currentMD5Key = user + ":" + md5(fileBuffer);
-			cb(null, currentMD5Key);
-		},
-		function(key, cb) {
-			logger.info('Deleting from key from redis: ', key);
-			client.del(key, cb);
-		}
-	], function(err, data) {
-		callback(err, data);
-	});
+	if (isRedisAvailable()) {
+		return async.waterfall([
+			function(cb) {
+				var currentMD5Key = user + ":" + md5(fileBuffer);
+				cb(null, currentMD5Key);
+			},
+			function(key, cb) {
+				logger.info('Deleting from key from redis: ', key);
+				client.del(key, cb);
+			}
+		], function(err, data) {
+			callback(err, data);
+		});
+	}
+	return callback(null, null);
 }
 
 function get(key, callback) {
-	getClient().get(key, callback);
+	if (isRedisAvailable()) {
+		return getClient().get(key, callback);
+	}
+	return null;
 }
 
 function setex(key, expiration, data) {
-	expiration = expiration || PREFERENCES.EXPIRATION;
-	getClient().setex(key, expiration, data);
+	if (isRedisAvailable()) {
+		expiration = expiration || PREFERENCES.EXPIRATION;
+		return getClient().setex(key, expiration, data);
+	}
+	return null;
 }
 
-function isRedisAvailable(callback) {
-
-	redisStatus(redisConfig).checkStatus(function(err) {
-		if (err) {
-			return callback(err);
-		}
-		return callback();
-	});
+function isRedisAvailable() {
+	return isServiceOK;
 }
 
 function clientAvailable() {
