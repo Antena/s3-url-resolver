@@ -2,6 +2,7 @@
 
 var redisService = require('./redis-service'),
 	s3Service = require('./s3-service'),
+	AWS = require('aws-sdk'),
 	s3,
 	redis,
 	redisConfig,
@@ -30,10 +31,21 @@ function toRedisKey(bucket, key) {
 }
 
 var resolveUsingS3 = function(bucket, key, callback) {
+	var desiredExpirationInSecondsFromNow = PREFERENCES.expirationLimit;
+
+	var credentials = AWS.config.credentials;
+
+	if (!credentials.expired) {
+		var credentialsExpireTime = credentials.expireTime.getTime();
+		var now = new Date().getTime();
+		var credentialsExpireTimeInSecondsFromNow = (credentialsExpireTime - now) / 1000;
+		desiredExpirationInSecondsFromNow = Math.min(desiredExpirationInSecondsFromNow, credentialsExpireTimeInSecondsFromNow);
+	}
+
 	var params = {
 		Bucket: bucket,
 		Key: key,
-		Expires: PREFERENCES.expirationLimit
+		Expires: desiredExpirationInSecondsFromNow
 	};
 
 	var redisKey = toRedisKey(bucket, key);
@@ -44,7 +56,7 @@ var resolveUsingS3 = function(bucket, key, callback) {
 		}
 
 		if (redisService.isRedisAvailable() && redisKey) {
-			getClient().setex(redisKey, (PREFERENCES.expirationLimit - 300), signedURL);
+			getClient().setex(redisKey, (desiredExpirationInSecondsFromNow - 300), signedURL);
 		}
 
 		callback(err, signedURL);
