@@ -35,8 +35,6 @@ var resolveUsingS3 = function(bucket, key, callback) {
 
 	var credentials = AWS.config.credentials;
 
-	logger.info("AWS.config = ", JSON.stringify(AWS.config, null, 2));	//TODO (denise) remove log
-
 	if (!!credentials && !credentials.expired && credentials.expireTime) {
 		var credentialsExpireTime = credentials.expireTime.getTime();
 		var now = new Date().getTime();
