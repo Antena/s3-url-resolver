@@ -21,7 +21,7 @@ function getClient() {
 
 var resolveUrlAsAttachment = function resolve(bucket, key, callback) {
 	if (redisService.isRedisAvailable()) {
-		return resolveUsingCacheOrS3(bucket, key, callback);
+		return resolveUsingCacheOrS3(bucket, key, true, callback);
 	}
 	return resolveUsingS3AsAttachment(bucket, key, callback);
 };
@@ -99,7 +99,7 @@ var internalResolveUsingS3 = function(bucket, key, extraParams, callback) {
 };
 
 var resolveUsingCache = function(bucket, key, callback) {
-	return resolveUsingCache(bucket, key, false, callback);
+	return resolveUsingCacheOrS3(bucket, key, false, callback);
 };
 
 var resolveUsingCacheOrS3 = function(bucket, key, asAttachment, callback) {
