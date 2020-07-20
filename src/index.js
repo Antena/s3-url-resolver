@@ -19,6 +19,13 @@ function getClient() {
 	return redis;
 }
 
+var resolveUrlAsAttachment = function resolve(bucket, key, callback) {
+	if (redisService.isRedisAvailable()) {
+		return resolveUsingCacheOrS3(bucket, key, callback);
+	}
+	return resolveUsingS3AsAttachment(bucket, key, callback);
+};
+
 var resolveUrl = function resolve(bucket, key, callback) {
 	if (redisService.isRedisAvailable()) {
 		return resolveUsingCache(bucket, key, callback);
@@ -30,12 +37,36 @@ function toRedisKey(bucket, key) {
 	return bucket + ":" + key;
 }
 
+function last(array) {
+	var length = array == null ? 0 : array.length;
+	return length ? array[length - 1] : undefined;
+}
+
+var resolveUsingS3AsAttachment = function(bucket, key, callback) {
+	var filename = key;
+	if (key.indexOf('/') !== -1) {
+		filename = last(key.split('/'));
+	}
+
+	var extraParams = {
+		ResponseContentDisposition: 'attachment; filename=' + filename
+	};
+
+	internalResolveUsingS3(bucket, key, extraParams, callback);
+
+};
+
 var resolveUsingS3 = function(bucket, key, callback) {
+	internalResolveUsingS3(bucket, key, null, callback);
+};
+
+var internalResolveUsingS3 = function(bucket, key, extraParams, callback) {
+
 	var desiredExpirationInSecondsFromNow = PREFERENCES.expirationLimit;
 
 	var credentials = AWS.config.credentials;
 
-	if (!!credentials && !credentials.expired && credentials.expireTime) {
+	if (!credentials.expired && credentials.expireTime) {
 		var credentialsExpireTime = credentials.expireTime.getTime();
 		var now = new Date().getTime();
 		var credentialsExpireTimeInSecondsFromNow = (credentialsExpireTime - now) / 1000;
@@ -47,6 +78,10 @@ var resolveUsingS3 = function(bucket, key, callback) {
 		Key: key,
 		Expires: desiredExpirationInSecondsFromNow
 	};
+
+	if (!!extraParams && Object.keys(extraParams).length > 0) {
+		params = Object.assign(params, extraParams);
+	}
 
 	var redisKey = toRedisKey(bucket, key);
 
@@ -64,6 +99,10 @@ var resolveUsingS3 = function(bucket, key, callback) {
 };
 
 var resolveUsingCache = function(bucket, key, callback) {
+	return resolveUsingCache(bucket, key, false, callback);
+};
+
+var resolveUsingCacheOrS3 = function(bucket, key, asAttachment, callback) {
 	var redisKey = toRedisKey(bucket, key);
 
 	if (redisService.isRedisAvailable()) {
@@ -71,10 +110,10 @@ var resolveUsingCache = function(bucket, key, callback) {
 			if (stored) {
 				return callback(null, stored);
 			}
-			return resolveUsingS3(bucket, key, callback);
+			return asAttachment ? resolveUsingS3AsAttachment(bucket, key, callback) : resolveUsingS3(bucket, key, callback);
 		});
 	}
-	return resolveUsingS3(bucket, key, callback);
+	return asAttachment ? resolveUsingS3AsAttachment(bucket, key, callback) : resolveUsingS3(bucket, key, callback);
 };
 
 module.exports = function (config, s3Client, redisClient) {
@@ -94,8 +133,10 @@ module.exports = function (config, s3Client, redisClient) {
 	}
 
 	return {
+		resolveUrlAsAttachment: resolveUrlAsAttachment,
 		resolveUrl: resolveUrl,
 		resolveUsingCache: resolveUsingCache,
-		resolveUsingS3: resolveUsingS3
+		resolveUsingS3: resolveUsingS3,
+		resolveUsingS3AsAttachment: resolveUsingS3AsAttachment
 	};
 };
