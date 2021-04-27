@@ -21,17 +21,24 @@ function getClient() {
 
 var resolveUrlAsAttachment = function resolve(bucket, key, callback) {
 	if (redisService.isRedisAvailable()) {
-		return resolveUsingCacheOrS3(bucket, key, true, callback);
+		return resolveUsingCacheOrS3(bucket, key, null, true, callback);
 	}
-	return resolveUsingS3AsAttachment(bucket, key, callback);
+	return resolveUsingS3AsAttachment(bucket, key, null, callback);
 };
 
 var resolveUrl = function resolve(bucket, key, callback) {
 	if (redisService.isRedisAvailable()) {
-		return resolveUsingCache(bucket, key, callback);
+		return resolveUsingCache(bucket, key, null, callback);
 	}
 	return resolveUsingS3(bucket, key, callback);
 };
+
+var resolveUrlWithFilenameSuffix = function resolve(bucket, key, filenameSuffix, callback) {
+	if (redisService.isRedisAvailable()) {
+		return resolveUsingCache(bucket, key, filenameSuffix, callback);
+	}
+	return resolveUsingS3(bucket, key, callback);
+}
 
 function toRedisKey(bucket, key) {
 	return bucket + ":" + key;
@@ -42,11 +49,20 @@ function last(array) {
 	return length ? array[length - 1] : undefined;
 }
 
-var resolveUsingS3AsAttachment = function(bucket, key, callback) {
+function filenameSafe(s) {
+	return s.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+}
+
+var resolveUsingS3AsAttachment = function(bucket, key, filenameSuffix, callback) {
 	var filename = key;
 	if (key.indexOf('/') !== -1) {
 		filename = last(key.split('/'));
 	}
+
+	if (filenameSuffix) {
+		filename = [filename, filenameSafe(filenameSuffix)].join('-')
+	}
+
 
 	var extraParams = {
 		ResponseContentDisposition: 'attachment; filename=' + filename
@@ -98,11 +114,11 @@ var internalResolveUsingS3 = function(bucket, key, extraParams, callback) {
 	});
 };
 
-var resolveUsingCache = function(bucket, key, callback) {
-	return resolveUsingCacheOrS3(bucket, key, false, callback);
+var resolveUsingCache = function(bucket, key, filenameSuffix, callback) {
+	return resolveUsingCacheOrS3(bucket, key, filenameSuffix, false, callback);
 };
 
-var resolveUsingCacheOrS3 = function(bucket, key, asAttachment, callback) {
+var resolveUsingCacheOrS3 = function(bucket, key, filenameSuffix, asAttachment, callback) {
 	var redisKey = toRedisKey(bucket, key);
 
 	if (redisService.isRedisAvailable()) {
@@ -110,10 +126,10 @@ var resolveUsingCacheOrS3 = function(bucket, key, asAttachment, callback) {
 			if (stored) {
 				return callback(null, stored);
 			}
-			return asAttachment ? resolveUsingS3AsAttachment(bucket, key, callback) : resolveUsingS3(bucket, key, callback);
+			return asAttachment ? resolveUsingS3AsAttachment(bucket, key, filenameSuffix, callback) : resolveUsingS3(bucket, key, callback);
 		});
 	}
-	return asAttachment ? resolveUsingS3AsAttachment(bucket, key, callback) : resolveUsingS3(bucket, key, callback);
+	return asAttachment ? resolveUsingS3AsAttachment(bucket, key, filenameSuffix, callback) : resolveUsingS3(bucket, key, callback);
 };
 
 module.exports = function (config, s3Client, redisClient) {
@@ -135,6 +151,7 @@ module.exports = function (config, s3Client, redisClient) {
 	return {
 		resolveUrlAsAttachment: resolveUrlAsAttachment,
 		resolveUrl: resolveUrl,
+		resolveUrlWithFilenameSuffix: resolveUrlWithFilenameSuffix,
 		resolveUsingCache: resolveUsingCache,
 		resolveUsingS3: resolveUsingS3,
 		resolveUsingS3AsAttachment: resolveUsingS3AsAttachment
