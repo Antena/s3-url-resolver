@@ -19,11 +19,11 @@ function getClient() {
 	return redis;
 }
 
-var resolveUrlAsAttachment = function resolve(bucket, key, callback) {
+var resolveUrlAsAttachment = function resolve(bucket, key, filenameSuffix, callback) {
 	if (redisService.isRedisAvailable()) {
-		return resolveUsingCacheOrS3(bucket, key, null, true, callback);
+		return resolveUsingCacheOrS3(bucket, key, filenameSuffix, true, callback);
 	}
-	return resolveUsingS3AsAttachment(bucket, key, null, callback);
+	return resolveUsingS3AsAttachment(bucket, key, filenameSuffix, callback);
 };
 
 var resolveUrl = function resolve(bucket, key, callback) {
