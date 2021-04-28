@@ -1,6 +1,6 @@
 {
   "name": "s3-url-resolver",
-  "version": "0.1.10-4",
+  "version": "0.1.10",
   "description": "Get a signed URL for an s3 resource, either from redis or from s3.",
   "keywords": [
     "signed-url",
