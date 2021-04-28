@@ -50,7 +50,7 @@ function last(array) {
 }
 
 function filenameSafe(s) {
-	return s.replace(/[^a-z0-9]/gi, '_')
+	return s.replace(/[^a-z0-9]/gi, '-')
 }
 
 var resolveUsingS3AsAttachment = function(bucket, key, filenamePrefix, callback) {
