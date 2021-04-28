@@ -50,7 +50,7 @@ function last(array) {
 }
 
 function filenameSafe(s) {
-	return s.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+	return s.replace(/[^a-z0-9]/gi, '_')
 }
 
 var resolveUsingS3AsAttachment = function(bucket, key, filenamePrefix, callback) {
@@ -60,7 +60,7 @@ var resolveUsingS3AsAttachment = function(bucket, key, filenamePrefix, callback)
 	}
 
 	if (filenamePrefix) {
-		filename = [filenameSafe(filenamePrefix), filename].join('-')
+		filename = [filenameSafe(filenamePrefix), filename].join('_')
 	}
 
 
