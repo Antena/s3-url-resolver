@@ -1,5 +1,5 @@
 {
-  "name": "s3-url-resolver",
+  "name": "@wellbin/s3-url-resolver",
   "version": "0.1.10",
   "description": "Get a signed URL for an s3 resource, either from redis or from s3.",
   "keywords": [
@@ -10,13 +10,13 @@
     "url"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Antena/s3-url-resolver",
+  "homepage": "https://github.com/wellbin/s3-url-resolver",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Antena/s3-url-resolver"
+    "url": "https://github.com/wellbin/s3-url-resolver"
   },
   "bugs": {
-    "url": "https://github.com/Antena/s3-url-resolver/issues"
+    "url": "https://github.com/wellbin/s3-url-resolver/issues"
   },
   "author": {
     "name": "Denise Fernandez",
